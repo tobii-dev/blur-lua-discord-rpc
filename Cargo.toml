@@ -1,0 +1,13 @@
+[package]
+name = "blur-discord-rpc-asi"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "blur_discord_rpc"
+crate-type = ["cdylib"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+mlua = { version = "0.9.1", features = ["lua51", "module"] }

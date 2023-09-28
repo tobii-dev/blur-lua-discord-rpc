@@ -3,8 +3,6 @@ use std::sync::mpsc::{Receiver, Sender};
 use mlua::prelude::*;
 use mlua::UserData;
 
-
-
 struct LuaDiscordClient {
 	tx: Sender<String>,
 }
@@ -23,7 +21,6 @@ impl UserData for LuaDiscordClient {
 	// fn add_fields<'lua, F: LuaUserDataFields<'lua, Self>>(_fields: &mut F) {}
 
 	fn add_methods<'lua, M: LuaUserDataMethods<'lua, Self>>(methods: &mut M) {
-
 		//TODO: client:update_rpc()
 		// - How to handle bad starts?
 		methods.add_method("update_rpc", |_, this, state: String| -> LuaResult<()> {
@@ -42,20 +39,41 @@ impl UserData for LuaDiscordClient {
 			Ok(())
 		});
 
-
 		//TODO: client:is_online() method
 		methods.add_method("is_online", |_, _this, _: ()| -> LuaResult<bool> {
 			Ok(false)
 		});
-
 	}
 }
 
 //TODO: Move Discord stuff to rpc.rs
 fn client_thread(rx: Receiver<String>) {
-	use discord_rich_presence::{activity::{Assets, self}, DiscordIpc, DiscordIpcClient};
+	use discord_rich_presence::{
+		activity::{Activity, Assets},
+		DiscordIpc, DiscordIpcClient,
+	};
 	const CLIENT_ID: u64 = 933390770453499974;
-	let logo = Assets::new().large_image("logo");
+	let logo = Assets::new().large_image("logo").large_text("Blur");
+	let act = Activity::default().assets(logo);
+
+	/*
+	details = sz_state;
+
+	state = sz_playlist;
+
+	smallImageKey = sz_small_img_key;
+	smallImageText = sz_state; //TODO (maybe display better info about the playlist here)
+
+	//largeImageKey = "logo";
+	//largeImageText = "Blur"; //TODO (maybe display user:name here?)
+
+	partyId = party_id; // TODO: suppport actual party stuff,
+	partySize = party_size; //or, if user is not in a party, display lobby player numbers
+	partyMax = party_max;
+
+	dp.startTimestamp = start_time;
+	*/
+
 	let Ok(mut client) = DiscordIpcClient::new(&CLIENT_ID.to_string()) else {
 		log::info!("Failed to DiscordIpcClient::new()");
 		return;
@@ -63,12 +81,7 @@ fn client_thread(rx: Receiver<String>) {
 	log::info!("Created client");
 	let mut connected = if client.connect().is_ok() {
 		client
-			.set_activity(
-				activity::Activity::new()
-					.state("BLUR_STATE")
-					.details("BLUR_DETAILS")
-					.assets(Assets::new().large_image("logo")),
-			)
+			.set_activity(act.clone().state("state").details("details"))
 			.unwrap();
 		true
 	} else {
@@ -88,14 +101,7 @@ fn client_thread(rx: Receiver<String>) {
 			continue;
 		}
 
-		if client
-			.set_activity(
-				activity::Activity::new()
-					.state(&state)
-					.assets(Assets::new().large_image("logo")),
-			)
-			.is_err()
-		{
+		if client.set_activity(act.clone().state(&state)).is_err() {
 			log::info!("set_activity error");
 			continue;
 		}

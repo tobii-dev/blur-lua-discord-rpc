@@ -3,11 +3,17 @@ name = "blur-discord-rpc-asi"
 version = "0.1.0"
 edition = "2021"
 
+
 [lib]
 name = "blur_discord_rpc"
 crate-type = ["cdylib"]
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+blur-plugins-core = { git = "https://github.com/tobii-dev/blur-plugins-core" } # for log reasons
+log = { version = "0.4.20", features = ["release_max_level_info"] }
+log-panics = { version = "2.1.0", features = ["with-backtrace"] }
+simplelog = "0.12.1"
+
 mlua = { version = "0.9.1", features = ["lua51", "module"] }
+discord-rich-presence = "0.2.3"
